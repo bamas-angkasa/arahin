@@ -3,9 +3,12 @@
 import type * as Leaflet from 'leaflet'
 import { useEffect, useMemo, useRef } from 'react'
 
+import { cn } from '@/lib/utils'
+
 interface RouteMapProps {
   startLat?: number
   startLng?: number
+  className?: string
   stops: Array<{
     lat?: number
     lng?: number
@@ -15,7 +18,7 @@ interface RouteMapProps {
   }>
 }
 
-export default function RouteMap({ startLat, startLng, stops }: RouteMapProps) {
+export default function RouteMap({ startLat, startLng, stops, className }: RouteMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<Leaflet.Map | null>(null)
 
@@ -125,6 +128,9 @@ export default function RouteMap({ startLat, startLng, stops }: RouteMapProps) {
   }
 
   return (
-    <div ref={containerRef} className="h-96 overflow-hidden rounded-lg border border-gray-200 shadow" />
+    <div
+      ref={containerRef}
+      className={cn('h-96 overflow-hidden rounded-xl border border-gray-200 shadow-sm', className)}
+    />
   )
 }

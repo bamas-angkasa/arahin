@@ -35,8 +35,8 @@ export default function Login() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
-      <Card className="w-full max-w-md shadow-soft">
+    <main className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-4 py-10">
+      <Card className="w-full max-w-md border-gray-200 shadow-soft">
         <CardHeader>
           <CardTitle className="text-2xl">Sign in to Arahin</CardTitle>
           <CardDescription>Use your delivery dashboard account to continue.</CardDescription>
