@@ -13,6 +13,8 @@ from app.schemas.delivery_stop import DeliveryStop as DeliveryStopSchema, Delive
 from app.services.route_optimizer import optimize_route
 from app.services.distance_service import calculate_distance
 from app.services.google_maps_service import generate_google_maps_link
+from app.core.config import settings
+from app.services.geocoding_service import GoogleGeocodingService, geocoding_result_to_dict, place_suggestion_to_dict
 
 router = APIRouter()
 
@@ -30,6 +32,58 @@ def create_delivery_plan(plan: DeliveryPlanCreate, current_user: User = Depends(
     db.commit()
     db.refresh(db_plan)
     return db_plan
+
+
+@router.get("/geocode")
+async def geocode_start_address(address: str, current_user: User = Depends(get_current_user)):
+    clean_address = address.strip()
+    if len(clean_address) < 3:
+        raise HTTPException(status_code=400, detail="Address must be at least 3 characters")
+
+    service = GoogleGeocodingService(settings.google_maps_api_key)
+    result = await service.geocode_address(clean_address)
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Address not found. Please enter latitude and longitude manually.",
+        )
+
+    return geocoding_result_to_dict(result)
+
+
+@router.get("/reverse-geocode")
+async def reverse_geocode_start_address(lat: float, lng: float, current_user: User = Depends(get_current_user)):
+    service = GoogleGeocodingService(settings.google_maps_api_key)
+    result = await service.reverse_geocode(lat, lng)
+    return geocoding_result_to_dict(result)
+
+
+@router.get("/place-autocomplete")
+async def autocomplete_start_address(input: str, current_user: User = Depends(get_current_user)):
+    clean_input = input.strip()
+    if len(clean_input) < 3:
+        return {"suggestions": []}
+
+    service = GoogleGeocodingService(settings.google_maps_api_key)
+    suggestions = await service.autocomplete_address(clean_input)
+    return {"suggestions": [place_suggestion_to_dict(suggestion) for suggestion in suggestions]}
+
+
+@router.get("/place-details")
+async def get_place_details(place_id: str, current_user: User = Depends(get_current_user)):
+    clean_place_id = place_id.strip()
+    if len(clean_place_id) < 3:
+        raise HTTPException(status_code=400, detail="Place ID is required")
+
+    service = GoogleGeocodingService(settings.google_maps_api_key)
+    result = await service.geocode_place_id(clean_place_id)
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Place details not found. Please enter latitude and longitude manually.",
+        )
+
+    return geocoding_result_to_dict(result)
 
 
 @router.get("/{plan_id}", response_model=DeliveryPlanWithStops)
@@ -74,14 +128,23 @@ def delete_delivery_plan(plan_id: int, current_user: User = Depends(get_current_
 
 
 @router.post("/{plan_id}/stops/bulk")
-def bulk_create_stops(plan_id: int, bulk_stops: BulkStopCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def bulk_create_stops(plan_id: int, bulk_stops: BulkStopCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     plan = db.query(DeliveryPlanModel).filter(DeliveryPlanModel.id == plan_id, DeliveryPlanModel.user_id == current_user.id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Delivery plan not found")
     
+    geocoding_service = GoogleGeocodingService(settings.google_maps_api_key)
     stops = []
     for stop_data in bulk_stops.stops:
-        stop = DeliveryStopModel(**stop_data.dict(), delivery_plan_id=plan_id)
+        data = stop_data.dict()
+        if not data.get("lat") or not data.get("lng"):
+            result = await geocoding_service.geocode_address(data["raw_address"])
+            if result:
+                data["formatted_address"] = result.formatted_address
+                data["lat"] = result.lat
+                data["lng"] = result.lng
+
+        stop = DeliveryStopModel(**data, delivery_plan_id=plan_id)
         stops.append(stop)
         db.add(stop)
     
@@ -93,12 +156,21 @@ def bulk_create_stops(plan_id: int, bulk_stops: BulkStopCreate, current_user: Us
 
 
 @router.post("/{plan_id}/stops", response_model=DeliveryStopSchema)
-def create_stop(plan_id: int, stop: DeliveryStopCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def create_stop(plan_id: int, stop: DeliveryStopCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     plan = db.query(DeliveryPlanModel).filter(DeliveryPlanModel.id == plan_id, DeliveryPlanModel.user_id == current_user.id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Delivery plan not found")
     
-    db_stop = DeliveryStopModel(**stop.dict(), delivery_plan_id=plan_id)
+    data = stop.dict()
+    if not data.get("lat") or not data.get("lng"):
+        geocoding_service = GoogleGeocodingService(settings.google_maps_api_key)
+        result = await geocoding_service.geocode_address(data["raw_address"])
+        if result:
+            data["formatted_address"] = result.formatted_address
+            data["lat"] = result.lat
+            data["lng"] = result.lng
+
+    db_stop = DeliveryStopModel(**data, delivery_plan_id=plan_id)
     db.add(db_stop)
     db.commit()
     db.refresh(db_stop)

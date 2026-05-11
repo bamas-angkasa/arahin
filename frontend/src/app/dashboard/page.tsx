@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import DashboardShell from '@/components/DashboardShell'
-import DriverList from '@/components/DriverList'
-import RouteDetailsModal from '@/components/RouteDetailsModal'
+import GoogleMapsButton from '@/components/GoogleMapsButton'
 import RouteMap from '@/components/RouteMap'
+import RouteSummary from '@/components/RouteSummary'
+import StopList from '@/components/StopList'
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -97,30 +98,30 @@ export default function Dashboard() {
     >
       {error && <Alert className="mb-4">{error}</Alert>}
 
-      <div className="grid gap-5 xl:grid-cols-[390px_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
         <section className="space-y-5">
-          <Card className="p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm text-slate-500">Today routes</p>
-                <p className="mt-1 text-3xl font-semibold">{plans.length}</p>
+          <Card className="p-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Routes</p>
+                <p className="mt-1 text-2xl font-semibold">{plans.length}</p>
               </div>
-              <div>
-                <p className="text-sm text-slate-500">Optimized</p>
-                <p className="mt-1 text-3xl font-semibold text-blue-600">{stats.optimized}</p>
+              <div className="rounded-xl bg-blue-50 p-3">
+                <p className="text-xs text-blue-700">Optimized</p>
+                <p className="mt-1 text-2xl font-semibold text-blue-700">{stats.optimized}</p>
               </div>
-              <div>
-                <p className="text-sm text-slate-500">Stops</p>
-                <p className="mt-1 text-3xl font-semibold">{stats.stops}</p>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">Stops</p>
+                <p className="mt-1 text-2xl font-semibold">{stats.stops}</p>
               </div>
             </div>
           </Card>
 
           <Card className="p-4">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="font-semibold">Active Routes</h2>
-                <p className="text-sm text-slate-500">Tap a route to preview stops and map flow.</p>
+                <p className="text-sm text-slate-500">Select a route to preview on map.</p>
               </div>
               <Link href="/plans/new">
                 <Button size="sm">New</Button>
@@ -138,7 +139,7 @@ export default function Dashboard() {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="max-h-[calc(100vh-310px)] space-y-3 overflow-y-auto pr-1">
                 {plans.map((plan) => {
                   const isActive = selectedPlan?.id === plan.id
 
@@ -155,7 +156,7 @@ export default function Dashboard() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate font-semibold">{plan.title}</p>
-                          <p className="mt-1 truncate text-sm text-slate-500">{plan.start_address}</p>
+                          <p className="mt-1 line-clamp-2 text-sm text-slate-500">{plan.start_address}</p>
                         </div>
                         <Badge variant={plan.status === 'optimized' ? 'success' : 'secondary'}>
                           {plan.status.replace('_', ' ')}
@@ -167,22 +168,22 @@ export default function Dashboard() {
               </div>
             )}
           </Card>
-
-          <DriverList />
         </section>
 
-        <section className="min-h-[calc(100vh-126px)] space-y-5">
+        <section className="grid min-h-[calc(100vh-126px)] gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
           <Card className="overflow-hidden p-0">
             <div className="flex flex-col gap-4 border-b border-gray-200 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">Live Route Map</h2>
+              <div className="min-w-0">
+                <h2 className="truncate text-lg font-semibold">
+                  {selectedPlan ? selectedPlan.title : 'Live Route Map'}
+                </h2>
                 <p className="text-sm text-slate-500">
                   {selectedPlan
-                    ? `${selectedPlan.title} - ${selectedPlan.stops.length} stops`
+                    ? `${selectedPlan.stops.length} stops from ${selectedPlan.start_address}`
                     : 'Select a route to see delivery flow'}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex shrink-0 flex-wrap gap-2">
                 {selectedPlan && (
                   <>
                     <Button
@@ -195,6 +196,9 @@ export default function Dashboard() {
                     <Button onClick={optimizeSelectedPlan} disabled={isOptimizing}>
                       {isOptimizing ? 'Optimizing...' : 'Optimize'}
                     </Button>
+                    {selectedMapsLink && (
+                      <GoogleMapsButton link={selectedMapsLink}>Google Maps</GoogleMapsButton>
+                    )}
                   </>
                 )}
               </div>
@@ -206,25 +210,69 @@ export default function Dashboard() {
                   startLat={selectedPlan.start_lat}
                   startLng={selectedPlan.start_lng}
                   stops={selectedPlan.stops}
-                  className="h-[520px] rounded-xl"
+                  className="h-[calc(100vh-250px)] min-h-[430px] rounded-xl"
                 />
               ) : (
-                <div className="flex h-[520px] items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                <div className="flex h-[calc(100vh-250px)] min-h-[430px] items-center justify-center rounded-xl bg-slate-100 text-slate-500">
                   No route selected
                 </div>
               )}
             </div>
           </Card>
+
+          <aside className="space-y-5">
+            <Card className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                    Route Details
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold">
+                    {selectedPlan ? selectedPlan.title : 'No route selected'}
+                  </h2>
+                </div>
+                {selectedPlan && (
+                  <Badge variant={selectedPlan.status === 'optimized' ? 'success' : 'secondary'}>
+                    {selectedPlan.status.replace('_', ' ')}
+                  </Badge>
+                )}
+              </div>
+
+              {selectedPlan ? (
+                <div className="mt-4 space-y-4">
+                  <p className="text-sm leading-6 text-slate-500">{selectedPlan.start_address}</p>
+                  <RouteSummary
+                    totalDistance={selectedPlan.total_distance_km}
+                    totalDuration={selectedPlan.total_duration_minutes}
+                  />
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-slate-500">Choose a route from the left panel.</p>
+              )}
+            </Card>
+
+            <Card className="p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold">Delivery Stops</h2>
+                  <p className="text-sm text-slate-500">Operational stop order.</p>
+                </div>
+                {selectedPlan && <Badge variant="outline">{selectedPlan.stops.length}</Badge>}
+              </div>
+
+              {selectedPlan ? (
+                <div className="max-h-[calc(100vh-510px)] min-h-[220px] overflow-y-auto pr-1">
+                  <StopList stops={selectedPlan.stops} />
+                </div>
+              ) : (
+                <div className="rounded-xl bg-slate-50 p-5 text-sm text-slate-500">
+                  Stops will appear here after selecting a route.
+                </div>
+              )}
+            </Card>
+          </aside>
         </section>
       </div>
-
-      <RouteDetailsModal
-        plan={selectedPlan}
-        googleMapsLink={selectedMapsLink}
-        isOptimizing={isOptimizing}
-        onClose={() => setSelectedPlan(null)}
-        onOptimize={optimizeSelectedPlan}
-      />
     </DashboardShell>
   )
 }

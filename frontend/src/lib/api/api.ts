@@ -1,6 +1,21 @@
 // API client
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
+export type GeocodeResult = {
+  formatted_address: string
+  lat: number
+  lng: number
+  source: 'google' | 'local' | 'browser'
+}
+
+export type PlaceSuggestion = {
+  place_id: string
+  description: string
+  main_text: string
+  secondary_text: string
+  source: 'google' | 'local'
+}
+
 class ApiClient {
   private baseURL: string
 
@@ -102,6 +117,22 @@ class ApiClient {
 
   async getGoogleMapsLink(planId: number) {
     return this.request(`/delivery-plans/${planId}/google-maps-link`)
+  }
+
+  async geocodeAddress(address: string): Promise<GeocodeResult> {
+    return this.request(`/delivery-plans/geocode?address=${encodeURIComponent(address)}`)
+  }
+
+  async reverseGeocode(lat: number, lng: number): Promise<GeocodeResult> {
+    return this.request(`/delivery-plans/reverse-geocode?lat=${lat}&lng=${lng}`)
+  }
+
+  async autocompleteAddress(input: string): Promise<{ suggestions: PlaceSuggestion[] }> {
+    return this.request(`/delivery-plans/place-autocomplete?input=${encodeURIComponent(input)}`)
+  }
+
+  async getPlaceDetails(placeId: string): Promise<GeocodeResult> {
+    return this.request(`/delivery-plans/place-details?place_id=${encodeURIComponent(placeId)}`)
   }
 
   // Driver
