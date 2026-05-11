@@ -1,7 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+
+import { Alert } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { apiClient } from '@/lib/api/api'
 
 export default function NewPlan() {
   const [title, setTitle] = useState('')
@@ -9,111 +17,153 @@ export default function NewPlan() {
   const [startLat, setStartLat] = useState('')
   const [startLng, setStartLng] = useState('')
   const [bulkStops, setBulkStops] = useState('')
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Create plan and bulk stops
-    console.log('Create plan:', { title, startAddress, startLat, startLng, bulkStops })
-    // Redirect to plan detail
-    router.push('/dashboard')
+    setError('')
+    setIsSubmitting(true)
+
+    try {
+      const plan = await apiClient.createDeliveryPlan({
+        title,
+        start_address: startAddress,
+        start_lat: Number(startLat),
+        start_lng: Number(startLng),
+      })
+
+      const stops = bulkStops
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const [recipient_name, phone, raw_address, note] = line.split('|').map((part) => part.trim())
+          return {
+            recipient_name,
+            phone,
+            raw_address,
+            note: note || undefined,
+            priority: 1,
+          }
+        })
+        .filter((stop) => stop.recipient_name && stop.phone && stop.raw_address)
+
+      if (stops.length > 0) {
+        await apiClient.bulkCreateStops(plan.id, stops)
+      }
+
+      router.push(`/plans/${plan.id}`)
+    } catch {
+      setError('Could not create this delivery plan.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Delivery Plan</h1>
+    <main className="min-h-screen bg-background">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <Link href="/dashboard" className="text-sm font-medium text-primary hover:text-primary/80">
+          Back to dashboard
+        </Link>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                Plan Title
-              </label>
-              <input
-                type="text"
-                id="title"
-                required
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
+        <Card className="mt-6 shadow-soft">
+          <CardHeader>
+            <CardTitle className="text-2xl">Create Delivery Plan</CardTitle>
+            <CardDescription>
+              Add a starting point and paste delivery stops in one batch.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && <Alert>{error}</Alert>}
 
-            <div>
-              <label htmlFor="startAddress" className="block text-sm font-medium text-gray-700">
-                Start Address
-              </label>
-              <input
-                type="text"
-                id="startAddress"
-                required
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                value={startAddress}
-                onChange={(e) => setStartAddress(e.target.value)}
-              />
-            </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <label htmlFor="title" className="text-sm font-medium">
+                    Plan Title
+                  </label>
+                  <Input
+                    id="title"
+                    required
+                    placeholder="Malang Kota - Central Route"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="startLat" className="block text-sm font-medium text-gray-700">
-                  Start Latitude
+                <div className="space-y-2 sm:col-span-2">
+                  <label htmlFor="startAddress" className="text-sm font-medium">
+                    Start Address
+                  </label>
+                  <Input
+                    id="startAddress"
+                    required
+                    placeholder="Alun-Alun Kota Malang"
+                    value={startAddress}
+                    onChange={(e) => setStartAddress(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="startLat" className="text-sm font-medium">
+                    Start Latitude
+                  </label>
+                  <Input
+                    type="number"
+                    step="any"
+                    id="startLat"
+                    required
+                    placeholder="-7.9826"
+                    value={startLat}
+                    onChange={(e) => setStartLat(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="startLng" className="text-sm font-medium">
+                    Start Longitude
+                  </label>
+                  <Input
+                    type="number"
+                    step="any"
+                    id="startLng"
+                    required
+                    placeholder="112.6308"
+                    value={startLng}
+                    onChange={(e) => setStartLng(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="bulkStops" className="text-sm font-medium">
+                  Delivery Stops
                 </label>
-                <input
-                  type="number"
-                  step="any"
-                  id="startLat"
-                  required
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={startLat}
-                  onChange={(e) => setStartLat(e.target.value)}
+                <p className="text-sm text-muted-foreground">
+                  Format per line: Recipient Name | Phone | Address | Note
+                </p>
+                <Textarea
+                  id="bulkStops"
+                  rows={10}
+                  placeholder="Budi | 08123456789 | Jl. Ijen No. 10 Malang | Rumah pagar hitam&#10;Sinta | 081999888777 | Jl. Soekarno Hatta No. 20 Malang | Titip satpam"
+                  value={bulkStops}
+                  onChange={(e) => setBulkStops(e.target.value)}
                 />
               </div>
-              <div>
-                <label htmlFor="startLng" className="block text-sm font-medium text-gray-700">
-                  Start Longitude
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  id="startLng"
-                  required
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={startLng}
-                  onChange={(e) => setStartLng(e.target.value)}
-                />
+
+              <div className="flex justify-end">
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating plan...' : 'Create Plan'}
+                </Button>
               </div>
-            </div>
-
-            <div>
-              <label htmlFor="bulkStops" className="block text-sm font-medium text-gray-700">
-                Delivery Stops (Bulk Paste)
-              </label>
-              <p className="text-sm text-gray-500 mb-2">
-                Format: Recipient Name | Phone | Address | Note
-              </p>
-              <textarea
-                id="bulkStops"
-                rows={10}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Budi | 08123456789 | Jl. Ijen No. 10 Malang | Rumah pagar hitam&#10;Sinta | 081999888777 | Jl. Soekarno Hatta No. 20 Malang | Titip satpam"
-                value={bulkStops}
-                onChange={(e) => setBulkStops(e.target.value)}
-              />
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg"
-              >
-                Create Plan
-              </button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </main>
   )
 }

@@ -2,82 +2,108 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+import { Alert } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { apiClient } from '@/lib/api/api'
 
 export default function Register() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Implement register
-    console.log('Register:', { name, email, password })
+    setError('')
+    setIsSubmitting(true)
+
+    try {
+      await apiClient.register(name, email, password)
+      const token = await apiClient.login(email, password)
+      localStorage.setItem('token', token.access_token)
+      router.push('/dashboard')
+    } catch {
+      setError('Could not create this account. The email may already be registered.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <input
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <Card className="w-full max-w-md shadow-soft">
+        <CardHeader>
+          <CardTitle className="text-2xl">Create your account</CardTitle>
+          <CardDescription>Start planning delivery routes with a clean workspace.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium">
+                Full name
+              </label>
+              <Input
                 id="name"
                 name="name"
                 type="text"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Full name"
+                placeholder="Your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <div>
-              <input
+
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
+              <Input
                 id="email"
                 name="email"
                 type="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div>
-              <input
+
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium">
+                Password
+              </label>
+              <Input
                 id="password"
                 name="password"
                 type="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                placeholder="Minimum 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Sign up
-            </button>
-          </div>
+            {error && <Alert role="alert">{error}</Alert>}
 
-          <div className="text-center">
-            <Link href="/login" className="text-indigo-600 hover:text-indigo-500">
-              Already have an account? Sign in
-            </Link>
-          </div>
-        </form>
-      </div>
-    </div>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? 'Creating account...' : 'Sign up'}
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{' '}
+              <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+                Sign in
+              </Link>
+            </p>
+          </form>
+        </CardContent>
+      </Card>
+    </main>
   )
 }

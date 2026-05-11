@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import DeliveryPlanCard from '@/components/DeliveryPlanCard'
+import { Alert } from '@/components/ui/alert'
+import { Card } from '@/components/ui/card'
 import { apiClient } from '@/lib/api/api'
 import { DeliveryPlan } from '@/types'
 
@@ -36,56 +38,53 @@ export default function Dashboard() {
   }, [router])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+    <main className="min-h-screen bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-primary">Arahin Dashboard</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal">Delivery Plans</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Review routes, optimize stop order, and open directions in Google Maps.
+            </p>
+          </div>
+          <Link
+            href="/plans/new"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+          >
+            Create New Plan
+          </Link>
+        </header>
+
+        {error && <Alert className="mb-6">{error}</Alert>}
+
+        {isLoading ? (
+          <Card className="p-10 text-center text-muted-foreground">Loading delivery plans...</Card>
+        ) : plans.length === 0 ? (
+          <Card className="p-10 text-center">
+            <h2 className="text-lg font-semibold">No delivery plans yet</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Create your first route to start planning.</p>
             <Link
               href="/plans/new"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg"
+              className="mt-5 inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
             >
-              Create New Plan
+              Create your first plan
             </Link>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {plans.map((plan) => (
+              <DeliveryPlanCard
+                key={plan.id}
+                id={plan.id}
+                title={plan.title}
+                status={plan.status}
+                createdAt={plan.created_at}
+              />
+            ))}
           </div>
-
-          {error && (
-            <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          {isLoading ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">Loading delivery plans...</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {plans.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-gray-500 text-lg">No delivery plans yet.</p>
-                  <Link
-                    href="/plans/new"
-                    className="text-indigo-600 hover:text-indigo-500 mt-2 inline-block"
-                  >
-                    Create your first plan
-                  </Link>
-                </div>
-              ) : (
-                plans.map((plan) => (
-                  <DeliveryPlanCard
-                    key={plan.id}
-                    id={plan.id}
-                    title={plan.title}
-                    status={plan.status}
-                    createdAt={plan.created_at}
-                  />
-                ))
-              )}
-            </div>
-          )}
-        </div>
+        )}
       </div>
-    </div>
+    </main>
   )
 }

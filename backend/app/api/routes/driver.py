@@ -4,8 +4,7 @@ from typing import List
 
 from app.db.session import get_db
 from app.models.delivery_plan import DeliveryPlan
-from app.models.delivery_stop import DeliveryStop, DeliveryStopStatus
-from app.schemas.delivery_stop import DeliveryStop
+from app.models.delivery_stop import DeliveryStop as DeliveryStopModel, DeliveryStopStatus
 
 router = APIRouter()
 
@@ -16,7 +15,7 @@ def get_driver_view(share_code: str, db: Session = Depends(get_db)):
     if not plan:
         raise HTTPException(status_code=404, detail="Delivery plan not found")
     
-    stops = db.query(DeliveryStop).filter(DeliveryStop.delivery_plan_id == plan.id).order_by(DeliveryStop.sequence_order).all()
+    stops = db.query(DeliveryStopModel).filter(DeliveryStopModel.delivery_plan_id == plan.id).order_by(DeliveryStopModel.sequence_order).all()
     
     return {
         "plan": {
@@ -32,7 +31,7 @@ def get_driver_view(share_code: str, db: Session = Depends(get_db)):
 
 @router.patch("/stops/{stop_id}/mark-delivered")
 def mark_stop_delivered(stop_id: int, db: Session = Depends(get_db)):
-    stop = db.query(DeliveryStop).filter(DeliveryStop.id == stop_id).first()
+    stop = db.query(DeliveryStopModel).filter(DeliveryStopModel.id == stop_id).first()
     if not stop:
         raise HTTPException(status_code=404, detail="Delivery stop not found")
     
@@ -43,7 +42,7 @@ def mark_stop_delivered(stop_id: int, db: Session = Depends(get_db)):
 
 @router.patch("/stops/{stop_id}/mark-failed")
 def mark_stop_failed(stop_id: int, db: Session = Depends(get_db)):
-    stop = db.query(DeliveryStop).filter(DeliveryStop.id == stop_id).first()
+    stop = db.query(DeliveryStopModel).filter(DeliveryStopModel.id == stop_id).first()
     if not stop:
         raise HTTPException(status_code=404, detail="Delivery stop not found")
     

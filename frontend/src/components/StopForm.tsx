@@ -1,3 +1,6 @@
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+
 interface StopFormProps {
   recipientName: string
   phone: string
@@ -15,74 +18,64 @@ export default function StopForm({
   note,
   lat,
   lng,
-  onChange
+  onChange,
 }: StopFormProps) {
   return (
     <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Recipient Name</label>
-        <input
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Recipient Name</label>
+        <Input
           type="text"
           required
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           value={recipientName}
           onChange={(e) => onChange('recipientName', e.target.value)}
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Phone</label>
-        <input
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Phone</label>
+        <Input
           type="tel"
           required
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           value={phone}
           onChange={(e) => onChange('phone', e.target.value)}
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Address</label>
-        <input
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Address</label>
+        <Input
           type="text"
           required
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           value={rawAddress}
           onChange={(e) => onChange('rawAddress', e.target.value)}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Latitude</label>
-          <input
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Latitude</label>
+          <Input
             type="number"
             step="any"
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             value={lat || ''}
             onChange={(e) => onChange('lat', parseFloat(e.target.value))}
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Longitude</label>
-          <input
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Longitude</label>
+          <Input
             type="number"
             step="any"
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             value={lng || ''}
             onChange={(e) => onChange('lng', parseFloat(e.target.value))}
           />
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Note</label>
-        <textarea
-          rows={2}
-          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          value={note}
-          onChange={(e) => onChange('note', e.target.value)}
-        />
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Note</label>
+        <Textarea rows={2} value={note} onChange={(e) => onChange('note', e.target.value)} />
       </div>
     </div>
   )

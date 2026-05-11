@@ -1,3 +1,6 @@
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { DeliveryStop } from '@/types'
 
 interface StopListProps {
@@ -6,55 +9,52 @@ interface StopListProps {
   onMarkFailed?: (stopId: number) => void
 }
 
+function statusVariant(status: string) {
+  if (status === 'delivered') return 'success'
+  if (status === 'failed') return 'destructive'
+  if (status === 'in_progress') return 'secondary'
+  return 'warning'
+}
+
 export default function StopList({ stops, onMarkDelivered, onMarkFailed }: StopListProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {stops.map((stop) => (
-        <div key={stop.id} className="bg-white shadow rounded-lg p-4">
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2">
+        <Card key={stop.id} className="p-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
                 {stop.sequence_order && (
-                  <span className="bg-indigo-100 text-indigo-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                     {stop.sequence_order}
                   </span>
                 )}
-                <h3 className="text-lg font-medium text-gray-900">{stop.recipient_name}</h3>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  stop.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  stop.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                  stop.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
+                <h3 className="text-base font-semibold">{stop.recipient_name}</h3>
+                <Badge variant={statusVariant(stop.status)}>
                   {stop.status.replace('_', ' ')}
-                </span>
+                </Badge>
               </div>
-              <p className="text-sm text-gray-600 mt-1">{stop.phone}</p>
-              <p className="text-sm text-gray-600">{stop.raw_address}</p>
-              {stop.note && <p className="text-sm text-gray-500 mt-1">{stop.note}</p>}
+              <p className="mt-2 text-sm text-muted-foreground">{stop.phone}</p>
+              <p className="mt-1 text-sm">{stop.raw_address}</p>
+              {stop.note && <p className="mt-2 text-sm text-muted-foreground">{stop.note}</p>}
             </div>
+
             {(onMarkDelivered || onMarkFailed) && (
-              <div className="flex space-x-2 ml-4">
+              <div className="flex gap-2">
                 {onMarkDelivered && (
-                  <button
-                    onClick={() => onMarkDelivered(stop.id)}
-                    className="bg-green-600 hover:bg-green-700 text-white text-sm px-3 py-1 rounded"
-                  >
+                  <Button size="sm" onClick={() => onMarkDelivered(stop.id)}>
                     Delivered
-                  </button>
+                  </Button>
                 )}
                 {onMarkFailed && (
-                  <button
-                    onClick={() => onMarkFailed(stop.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded"
-                  >
+                  <Button size="sm" variant="destructive" onClick={() => onMarkFailed(stop.id)}>
                     Failed
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   )

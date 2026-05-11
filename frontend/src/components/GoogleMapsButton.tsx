@@ -1,6 +1,8 @@
+import { ReactNode } from 'react'
+
 interface GoogleMapsButtonProps {
   link: string
-  children?: React.ReactNode
+  children?: ReactNode
 }
 
 export default function GoogleMapsButton({ link, children }: GoogleMapsButtonProps) {
@@ -9,7 +11,7 @@ export default function GoogleMapsButton({ link, children }: GoogleMapsButtonPro
       href={link}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      className="inline-flex h-10 items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       {children || 'Open in Google Maps'}
     </a>

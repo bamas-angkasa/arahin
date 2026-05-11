@@ -1,3 +1,5 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
 interface RouteSummaryProps {
   totalDistance?: number
   totalDuration?: number
@@ -9,18 +11,20 @@ export default function RouteSummary({ totalDistance, totalDuration }: RouteSumm
   }
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Route Summary</h3>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-sm text-gray-500">Total Distance</p>
-          <p className="text-2xl font-semibold text-gray-900">{totalDistance.toFixed(1)} km</p>
+    <Card>
+      <CardHeader>
+        <CardTitle>Route Summary</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-md bg-muted/60 p-4">
+          <p className="text-sm text-muted-foreground">Total Distance</p>
+          <p className="mt-1 text-2xl font-semibold">{totalDistance.toFixed(1)} km</p>
         </div>
-        <div>
-          <p className="text-sm text-gray-500">Estimated Time</p>
-          <p className="text-2xl font-semibold text-gray-900">{Math.round(totalDuration)} min</p>
+        <div className="rounded-md bg-muted/60 p-4">
+          <p className="text-sm text-muted-foreground">Estimated Time</p>
+          <p className="mt-1 text-2xl font-semibold">{Math.round(totalDuration)} min</p>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

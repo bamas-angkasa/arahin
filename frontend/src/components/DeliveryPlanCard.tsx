@@ -1,3 +1,8 @@
+import Link from 'next/link'
+
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+
 interface DeliveryPlanCardProps {
   id: number
   title: string
@@ -7,20 +12,28 @@ interface DeliveryPlanCardProps {
 
 export default function DeliveryPlanCard({ id, title, status, createdAt }: DeliveryPlanCardProps) {
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
-      <div className="p-6">
-        <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-        <p className="text-sm text-gray-500 mt-1 capitalize">{status.replace('_', ' ')}</p>
-        <p className="text-xs text-gray-400 mt-2">{new Date(createdAt).toLocaleDateString()}</p>
-        <div className="mt-4">
-          <a
-            href={`/plans/${id}`}
-            className="text-indigo-600 hover:text-indigo-500 text-sm font-medium"
-          >
-            View Details →
-          </a>
+    <Card className="group transition-all hover:-translate-y-0.5 hover:shadow-soft">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <CardTitle className="leading-6">{title}</CardTitle>
+          <Badge variant={status === 'optimized' ? 'success' : 'secondary'}>
+            {status.replace('_', ' ')}
+          </Badge>
         </div>
-      </div>
-    </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">
+          Created {new Date(createdAt).toLocaleDateString()}
+        </p>
+      </CardContent>
+      <CardFooter>
+        <Link
+          href={`/plans/${id}`}
+          className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+        >
+          View details -&gt;
+        </Link>
+      </CardFooter>
+    </Card>
   )
 }

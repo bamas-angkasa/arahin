@@ -49,3 +49,14 @@ export interface OptimizedRoute {
   total_distance_km: number
   total_duration_minutes: number
 }
+
+export interface DriverRouteView {
+  plan: {
+    id: number
+    title: string
+    start_address: string
+    total_distance_km?: number
+    total_duration_minutes?: number
+  }
+  stops: DeliveryStop[]
+}
