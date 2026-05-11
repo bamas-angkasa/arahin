@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -45,6 +46,11 @@ module.exports = {
       },
       boxShadow: {
         soft: '0 18px 45px rgb(15 23 42 / 0.08)',
+        panel: '0 18px 60px rgb(2 6 23 / 0.16)',
+        glow: '0 0 28px rgb(14 165 233 / 0.18)',
+      },
+      backgroundImage: {
+        'geo-radial': 'radial-gradient(circle at top left, hsl(var(--primary) / 0.12), transparent 32rem)',
       },
     },
   },

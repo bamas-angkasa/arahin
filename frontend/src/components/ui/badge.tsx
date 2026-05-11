@@ -6,11 +6,11 @@ type BadgeVariant = 'default' | 'secondary' | 'outline' | 'success' | 'warning' 
 
 const variants: Record<BadgeVariant, string> = {
   default: 'bg-primary text-primary-foreground',
-  secondary: 'bg-secondary text-secondary-foreground',
+  secondary: 'bg-secondary text-secondary-foreground dark:bg-slate-800 dark:text-slate-300',
   outline: 'border border-border bg-background text-foreground',
-  success: 'bg-emerald-100 text-emerald-800',
-  warning: 'bg-amber-100 text-amber-800',
-  destructive: 'bg-red-100 text-red-800',
+  success: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200',
+  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200',
+  destructive: 'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-200',
 }
 
 export function Badge({

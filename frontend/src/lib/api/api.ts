@@ -45,7 +45,16 @@ class ApiClient {
 
     const response = await fetch(url, config)
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status}`)
+      let message = `API Error: ${response.status}`
+      try {
+        const errorBody = await response.json()
+        if (typeof errorBody.detail === 'string') {
+          message = errorBody.detail
+        }
+      } catch {
+        // Keep the HTTP status fallback when the backend does not return JSON.
+      }
+      throw new Error(message)
     }
     return response.json()
   }

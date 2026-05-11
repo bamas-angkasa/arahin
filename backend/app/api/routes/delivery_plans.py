@@ -207,18 +207,38 @@ def delete_stop(stop_id: int, current_user: User = Depends(get_current_user), db
 
 
 @router.post("/{plan_id}/optimize", response_model=OptimizedRoute)
-def optimize_delivery_plan(plan_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def optimize_delivery_plan(plan_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     plan = db.query(DeliveryPlanModel).filter(DeliveryPlanModel.id == plan_id, DeliveryPlanModel.user_id == current_user.id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="Delivery plan not found")
     
     stops = db.query(DeliveryStopModel).filter(DeliveryStopModel.delivery_plan_id == plan_id).all()
+
+    geocoding_service = GoogleGeocodingService(settings.google_maps_api_key)
+    for stop in stops:
+        if stop.lat is not None and stop.lng is not None:
+            continue
+
+        result = await geocoding_service.geocode_address(stop.raw_address)
+        if result:
+            stop.formatted_address = result.formatted_address
+            stop.lat = result.lat
+            stop.lng = result.lng
+
+    db.commit()
     
     # Check if all stops have lat/lng
-    if not all(stop.lat and stop.lng for stop in stops):
-        raise HTTPException(status_code=400, detail="All stops must have latitude and longitude")
+    missing_coordinate_stops = [stop for stop in stops if stop.lat is None or stop.lng is None]
+    if missing_coordinate_stops:
+        missing_names = [stop.recipient_name for stop in missing_coordinate_stops[:5]]
+        remaining_count = len(missing_coordinate_stops) - len(missing_names)
+        suffix = f" and {remaining_count} more" if remaining_count > 0 else ""
+        raise HTTPException(
+            status_code=400,
+            detail=f"Missing coordinates for: {', '.join(missing_names)}{suffix}",
+        )
     
-    if not plan.start_lat or not plan.start_lng:
+    if plan.start_lat is None or plan.start_lng is None:
         raise HTTPException(status_code=400, detail="Start location must have latitude and longitude")
     
     # Prepare locations: start + stops

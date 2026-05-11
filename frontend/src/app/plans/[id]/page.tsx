@@ -66,8 +66,8 @@ export default function PlanDetail() {
       setPlan(refreshedPlan)
       const mapsResponse = await apiClient.getGoogleMapsLink(plan.id)
       setGoogleMapsLink(mapsResponse.google_maps_link)
-    } catch {
-      setError('Could not optimize this route.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not optimize this route.')
     } finally {
       setIsOptimizing(false)
     }
